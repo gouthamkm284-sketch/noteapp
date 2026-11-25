@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react'
-import { CreateNote } from './CreateNote'
+import React, { useEffect, useRef, useState } from 'react'
 import './notes.css'
 import{ v4 as uuid } from 'uuid'
-import { Note } from './Note'
+// import { CreateNote } from './CreateNote'
+// import { Note } from './Note'
+import { Sidebar } from './SideBar'
+import { SearchBar } from './SearchBar'
+import { NoteList } from './NoteList'
 
 const Notes = () => {
 // useState begins here
@@ -21,13 +24,16 @@ const Notes = () => {
     const [sort, setSort] = useState("newest")
     const [tagFilter, setTagFilter] = useState("all")
     const [selected, setSelected] = useState([])
+    const searchRef = useRef(null)
+    const[loading, setLoading] = useState(true)
+    const [layout, setLayout] = useState("grid")
 // useState const ends here 
 
 // edit handler starts here
     const editHandler = (id, title, content, color, tags) => {
         setEditToggle(id)
-        setInputTitle(title)
-        setInputText(content)
+        setInputTitle(title || "")
+        setInputText(content || "")
         setInputColor(color || "yellow")
         setInputTags(tags || [])
         setError("")
@@ -62,11 +68,12 @@ const Notes = () => {
         const title = inputTitle.trim()
         const content = inputText.trim()
         
-        if(!content) return setError("Content is required (at least 1 charchter)")
+        if(!content) return setError("Content is required (at least 1 character)")
         if(title.length>100) return setError("Title can be at most 100 characters")
+        if(content.length > 5000) return setError("Content can be at most 5000 characters")
 
             const duplicate = notes.some((n) => 
-            n.id !== editToggle && n.title === title && n.content === content)
+            n.id !== editToggle && (n.title || "") === title && n.content === content)
             if(duplicate) return setError("This note already exists")
 
                 setError("")
@@ -110,13 +117,49 @@ const Notes = () => {
     };
 // save handler ends here
 
+//cancel handler starts here 
+    const cancelHandler = () =>{
+        setEditToggle(null)
+        setInputTitle("")
+        setInputText("")
+        setInputColor("yellow")
+        setInputTags([])
+        setError("")
+    }
+//cancel handle ends here
+
     useEffect(() => {
         localStorage.setItem('Notes', JSON.stringify(notes))
     }, [notes])
 
+    useEffect(() => {
+        const onKey = (e) => {
+            const tag = e.target.tagName
+            if(e.key === "/" && tag!== "INPUT" && tag!== "TEXTAREA" && tag !== "SELECT"){
+                e.preventDefault()
+            searchRef.current?.focus()
+        }
+    }
+    window.addEventListener("keydown" , onKey)
+    return () => window.removeEventListener("keydown", onKey)
+    },[])
+
+    useEffect(() => {
+        const onEsc = (e) => {
+            if(e.key === "Escape" && editToggle) cancelHandler()
+        }
+    window.addEventListener("keydown", onEsc)
+    return () => window.removeEventListener("keydown", onEsc)
+    }, [editToggle])
+    
+    useEffect(() => {
+        const t =setTimeout(() => setLoading(false), 400)
+        return () => clearTimeout(t)
+    }, [])
+
     const allTags = [...new Set(
         notes
-            .filter((n) => n.archived === (view === "archive"))
+            .filter((n) => Boolean(n.archived) === (view === "archive"))
             .flatMap((n) => n.tags || [])
     )].sort()
 
@@ -126,12 +169,13 @@ const Notes = () => {
         .filter((n) => Boolean(n.archived) === (view === "archive"))
         .filter((n) => activeTag === "all" || (n.tags || []).includes(activeTag))
         .filter((n) => 
-            (n.title + " " + n.content + " " + (n.tags || []) .join(" "))
+            ((n.title || "")+ " " + n.content + " " + (n.tags || []) .join(" "))
                 .toLowerCase()
                 .includes(query.toLowerCase()))
         .sort((a,b) => {
-            if(a.pinned !== b.pinned) return b.pinned - a.pinned
+            if(Boolean(a.pinned) !== Boolean(b.pinned)) return Boolean(b.pinned) - Boolean(a.pinned)
             if(sort === "title") return (a.title || "").localeCompare(b.title || "")
+            if(sort === "color") return (a.color || "").localeCompare(b.color || "")
             if(sort === "oldest") return a.createdAt - b.createdAt
             return b.createdAt - a.createdAt
         })
@@ -149,53 +193,51 @@ const Notes = () => {
             setSelected([])
         }
 
+        const formProps = {
+            inputTitle,
+            setInputTitle,
+            inputText,
+            setInputText,
+            inputColor,
+            setInputColor,
+            inputTags,
+            setInputTags,
+            saveHandler,
+            cancelHandler,
+            error
+        }
+
+        const noteHandlers = {
+            toggleSelect, editHandler, deleteHandler, pinHandler, archiveHandler
+        }
+
+        if(loading) {
+            return (
+                <div className="notes">
+                    {[1,2,3].map((i) => (
+                        <div key={i} className="note animate-pulse"/>
+                    ))}
+                </div>
+            )
+        }
+
 return (
     <>
     <div className="flex flex-wrap items-center gap-3 mb-4">
-        <button
-            className={`px-4 py-1.5 rounded-xl font-bold text-sm 
-                ${view==='notes' ? "bg-green-700 text-white" : "bg-white/50"}`}
-            onClick={() => setView("notes")}
-        >
-            Notes
-        </button>
-        <button 
-            className={`px-4 py-1.5 rounded-xl font-bold text-sm 
-                ${view ==="archive" ? "bg-green-700 text-white" : "bg-white/50"}`}
-            onClick={() => setView("archive")}
-        >
-            Archive    
-        </button>
-
-        <input
-            className="flex-1 min-w-[180px] rounded-xl bg-white/50 px-3 py-1.5 outline-none"
-            placeholder='Search notes....'
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            />
-
-            <select className='rounded-xl bg-white/50 px-3 py-1.5'
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            >
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="title">Title A-Z</option>
-            </select>
-
-            {allTags.length > 0 && (
-                <select 
-                className="rounded-xl bg-white/50 px-3 py-1.5"
-                value={activeTag}
-                onChange={(e) => setTagFilter(e.target.value)}
-                >
-                    <option value ="all">All tags</option>
-                    {allTags.map((t) => (
-                        <option key={t} value={t}>#{t}</option>
-                    ))}
-                </select>
-            )}
-            </div>
+        <Sidebar view={view} setView={setView} cancelHandler={cancelHandler}/>
+        <SearchBar
+            query={query} 
+            setQuery={setQuery}
+            sort={sort}
+            setSort={setSort}
+            allTags={allTags}
+            activeTag={activeTag}
+            setTagFilter={setTagFilter}
+            layout={layout}
+            setLayout={setLayout}
+            searchRef={searchRef}
+        />
+    </div>
         
         {selectedVisible.length > 0 && (
             <div className='flex flex-wrap items-center gap-3 mb-4 rounded-xl bg-white/60 px-4 py-2'>
@@ -208,68 +250,16 @@ return (
             </div>
         )}
 
-    <div className='notes'>
-        {visibleNotes.map((note) => (
-                editToggle === note.id ? 
-                    <CreateNote 
-                        key={note.id}
-                        inputTitle={inputTitle}
-                        setInputTitle={setInputTitle}
-                        inputText={inputText} 
-                        setInputText = {setInputText}
-                        inputColor={inputColor}
-                        setInputColor={setInputColor}
-                        inputTags={inputTags}
-                        setInputTags={setInputTags}
-                        saveHandler = {saveHandler}
-                        error={error}
-                    />
-                    :
-                    <Note
-                        key={note.id}
-                        id={note.id}
-                        title={note.title}
-                        content={note.content}
-                        color={note.color}
-                        tags={note.tags}
-                        selected={selectedVisible.includes(note.id)}
-                        toggleSelect={toggleSelect}
-                        pinned={note.pinned}
-                        archived={note.archived}
-                        createdAt={note.createdAt}
-                        updatedAt={note.updatedAt}
-                        editHandler={editHandler}
-                        deleteHandler={deleteHandler}
-                        pinHandler={pinHandler}
-                        archiveHandler={archiveHandler}
-                    />
-                ))
-            }
-            {visibleNotes.length === 0 && (
-                    <p className = 'font-semibold text-[#263238]'>
-                        {query
-                        ? 'No notes match your search.'
-                        : view === 'archive'
-                        ? 'Nothing archived yet.'
-                        :'No notes yet. write your first one!'}
-                    </p>
-                )
-            }
-            {!editToggle && view ==="notes" &&
-            <CreateNote 
-            inputTitle={inputTitle}
-            setInputTitle={setInputTitle}
-            inputText={inputText} 
-            setInputText={setInputText}
-            inputColor={inputColor}
-            setInputColor={setInputColor}
-            inputTags={inputTags}
-            setInputTags={setInputTags}
-            saveHandler={saveHandler}
-            error={error}
-            />
-            }
-    </div>
+        <NoteList
+            notes={visibleNotes}
+            layout={layout}
+            view={view}
+            query={query}
+            editToggle={editToggle}
+            selectedIds={selectedVisible}
+            formProps={formProps}
+            noteHandlers={noteHandlers}
+        />
     </>
   )
 }

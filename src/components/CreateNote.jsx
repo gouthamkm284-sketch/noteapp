@@ -11,11 +11,13 @@ export const CreateNote = ({
     inputTags=[],
     setInputTags,
     saveHandler,
+    cancelHandler,
+    autoFocus=false,
     error}) => {
-    // const char =100;
-    // const charLimit = char - inputText.length;
 
+    const MAX_CONTENT = 5000
     const titleLeft = 100 - inputTitle.length
+    const contentLeft = MAX_CONTENT - inputText.length
 
     const [tagDraft, setTagDraft] = useState("")
     
@@ -35,11 +37,19 @@ export const CreateNote = ({
         }
     }
 
+    const onFormKeyDown = (e) =>{
+        if((e.ctrlKey || e.metaKey) && e.key === "Enter"){
+            e.preventDefault()
+            saveHandler()
+        }
+        if(e.key === "Escape") cancelHandler()
+    }
+
     return (
-    <div className='note'>
+    <div className='note' onKeyDown={onFormKeyDown}>
         <input
         type='text'
-        className="w-full bg-transparent text-2xl font-semibold outline-none mb-2"
+        className="w-full bg-transparent text-[#263238] text-2xl font-semibold outline-none mb-2"
         placeholder='Content (required)'
         value={inputTitle}
         onChange={(e) => setInputTitle(e.target.value)}
@@ -52,6 +62,8 @@ export const CreateNote = ({
         placeholder="Type..."
         value={inputText}
         onChange={(e) => setInputText(e.target.value)}
+        maxLength={MAX_CONTENT}
+        autoFocus={autoFocus}
         />
 
     <div className ="flex flex-wrap items-center gap-2 my-2">
@@ -88,7 +100,7 @@ export const CreateNote = ({
         {error && <p className ='text-red-700 text-sm font-semibold mt-2'>{error}</p>}
 
         <div className='note_footer'>
-            <span className = 'label'>Title: {titleLeft} left</span>
+            <span className = 'label'>Title: {titleLeft} . Content: {contentLeft}</span>
             <button className='note_save' onClick = {saveHandler}>Save</button>
         </div>
     </div>

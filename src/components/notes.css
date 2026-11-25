@@ -65,7 +65,7 @@
     margin-bottom: 8px;
 }
 
-.note-title::placeholder {
+.note_title::placeholder {
     color:#888;
     font-weight: 400;
 }
