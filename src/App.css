@@ -43,3 +43,62 @@ body{
   grid-gap:1rem;
   grid-template-columns: 1fr;
 }
+
+/* ---------- note colors ---------- */
+:root {
+    --note-yellow: rgba(254, 243, 199, 0.6);
+    --note-green: rgba(220, 252, 231, 0.6);
+    --note-blue: rgba(219, 234, 254, 0.6);
+    --note-pink: rgba(252, 231, 243, 0.6);
+    --note-purple: rgba(243, 232, 255, 0.6);
+    --note-white: rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- dark theme ---------- */
+.dark {
+    color-scheme: dark;
+    --note-yellow: rgba(161, 98, 7, 0.35);
+    --note-green: rgba(22, 101, 52, 0.4);
+    --note-blue: rgba(30, 64, 175, 0.4);
+    --note-pink: rgba(157, 23, 77, 0.4);
+    --note-purple: rgba(107, 33, 168, 0.4);
+    --note-white: rgba(255, 255, 255, 0.1);
+}
+
+.dark body {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)),
+        url("/image/foggy.jpg");
+}
+
+.dark .title { color: #f3f4f6; }
+
+.dark .note {
+    color: #e5e7eb;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+.dark .note:hover { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7); }
+
+.dark .note input,
+.dark .note textarea { color: #e5e7eb; }
+.dark .note input::placeholder,
+.dark .note textarea::placeholder { color: #9ca3af; }
+
+.dark .note_save {
+    border-color: #e5e7eb;
+    color: #e5e7eb;
+}
+.dark .note_save:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.dark .bg-white\/50,
+.dark .bg-white\/60,
+.dark .bg-white\/70 {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #e5e7eb;
+}
+
+.dark .text-\[\#263238\],
+.dark .text-\[\#44554a\] { color: #cbd5e1; }

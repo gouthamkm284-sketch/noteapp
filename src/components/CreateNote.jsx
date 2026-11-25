@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useRef, useState} from 'react'
 import ColorPicker from './ColorPicker'
 
 export const CreateNote = ({
@@ -37,6 +37,51 @@ export const CreateNote = ({
         }
     }
 
+    const textRef = useRef(null)
+
+    const wrap = (before, after = before) => {
+        const el = textRef.current
+        const s = el.selectionStart
+        const e = el.selectionEnd
+        const selected = inputText.slice(s, e)
+        setInputText(inputText.slice(0, s) + before + selected + after + inputText.slice(e))
+        requestAnimationFrame(() => {
+            el.focus()
+            el.setSelectionRange(s + before.length, e + before.length)
+        })
+    }
+
+    const makeList = () => {
+        const el = textRef.current
+        const s = el.selectionStart
+        const e = el.selectionEnd
+        const lineStart = s === 0 ? 0 : inputText.lastIndexOf("\n", s - 1) +1
+        const block = inputText.slice(lineStart, e)
+        const listed = block
+            .split("\n")
+            .map((l) => (l.startsWith("- ") ? l : "- " + l))
+        .join("\n")
+    setInputText(inputText.slice(0, lineStart) + listed + inputText.slice(e))
+    }
+
+    const onTextKeyDown = (e) => {
+        if(e.key !== "Enter" || e.ctrlKey || e.metaKey) return 
+        const el = textRef.current
+        const pos = el.selectionStart
+        const lineStart = inputText.slice(lineStart, pos)
+
+        if(line === "- ") {
+            e.preventDefault()
+            setInputText(inputText.slice(0, lineStart) + inputText.slice(pos))
+            return 
+        }
+        if(line.startsWith("- ")) {
+            e.preventDefault()
+            setInputText(inputText.slice(0, pos) + "\n- " + inputText.slice(pos))
+            requestAnimationFrame(() => el.setSelectionRange(pos + 3, pos + 3))
+        }
+    }
+
     const onFormKeyDown = (e) =>{
         if((e.ctrlKey || e.metaKey) && e.key === "Enter"){
             e.preventDefault()
@@ -55,6 +100,11 @@ export const CreateNote = ({
         onChange={(e) => setInputTitle(e.target.value)}
         maxLength={100}
         />
+        <div className='flex gap-2 mb-1'>
+            <button type="button" className='note_save font-bold' onClick={() => wrap("**")}>B</button>
+            <button type="button" className='note_save italic' onClick={() => wrap("*")}>I</button>
+            <button type="button" className="note_save" onClick={makeList}>• List</button>
+        </div>
         <textarea
         className='w-full bg-transparent text-base outline-none resize-none'
         cols={10}
@@ -64,6 +114,8 @@ export const CreateNote = ({
         onChange={(e) => setInputText(e.target.value)}
         maxLength={MAX_CONTENT}
         autoFocus={autoFocus}
+        ref={textRef}
+        onKeyDown={onTextKeyDown}
         />
 
     <div className ="flex flex-wrap items-center gap-2 my-2">

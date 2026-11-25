@@ -1,4 +1,5 @@
 import React from 'react'
+import { FormattedText } from './FormattedText'
 
 export const Note = ({
   id, 
@@ -25,18 +26,11 @@ export const Note = ({
     minute: '2-digit'
     })
 
-  const colorMap = {
-    yellow: "rgba(254,243,199,0.6)",
-    green: "rgba(220,252,231,0.6)",
-    blue: "rgba(219, 234, 254, 0.6)",
-    pink: "rgba(252, 231, 243, 0.6)",
-    purple: "rgba(243, 232, 255, 0.6)",
-    white: "rgba(255, 255, 255, 0.5)"
-    }
-
   return (
     <div className = {`note ${selected ? 'ring-2 ring-green-700' : ''}`}
-    style={{ backgroundColor: colorMap[color] || colorMap.yellow}}>
+    // style={{ backgroundColor: colorMap[color] || colorMap.yellow}}
+    style={{ backgroundColor: `var(--note-${color || "yellow"})` }}
+    >
       
       <div className = 'note-body'>
         
@@ -51,7 +45,7 @@ export const Note = ({
         </label>
 
         {title && <h3 className="text-xl font-semibold mb-3">{title}</h3>}
-        <p>{content}</p>
+        <FormattedText text={content}/>
 
         {tags.length > 0 && (
           <div className = "flex flex-wrap gap-1.5 mt-3">

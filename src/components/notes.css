@@ -2,7 +2,8 @@
 .note {
     background: rgba(255, 255, 255, 0.25);
     backdrop-filter: blur(5px);
-    box-shadow: inset -6px -4px 2px rgba(255, 255, 255, 0.03);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;;
     border-radius: 15px;
     border: 1.5px solid rgba(255, 255, 255, 0.5);
     color: #263238;
@@ -12,6 +13,11 @@
     flex-direction: column;
     justify-content: space-between;
     word-wrap: break-word; 
+}
+
+.note:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .note_footer{
